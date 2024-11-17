@@ -14,10 +14,11 @@ from core import callLater
 from mathPres import MathInteractionNVDAObject as FakeUi
 from scriptHandler import script
 
+from addon.globalPlugins.formattingRouter.fuzzyItemSearch import \
+    FuzzyItemSearch
+
 from . import formattingRotorUtils
 from .worldState import WorldState
-
-
 
 ConfigValidationData = config.ConfigValidationData
 FormattingItem = namedtuple('FormattingItem', ['name', 'configKey'])
@@ -26,6 +27,7 @@ FormattingItem = namedtuple('FormattingItem', ['name', 'configKey'])
 class LastChangedState(Enum):
     ITEM = auto()
     CATEGORY = auto()
+    SEARCH = auto()
     SETTING = auto()
 
 
@@ -37,7 +39,7 @@ class FormattingRotor(FakeUi):
 
     def _get_name(self):
         match self.lastChanged:
-            case LastChangedState.ITEM:
+            case LastChangedState.ITEM | LastChangedState.SEARCH:
                 return self.getItem().name
             case LastChangedState.CATEGORY:
                 return self.getCategory()
@@ -239,6 +241,7 @@ class FormattingRotor(FakeUi):
 
     buffer = []
     categoryIndex = 0
+    itemIndex = 0
     lastChanged = LastChangedState.CATEGORY
 
     def __init__(self, *args, **kwargs):
@@ -254,44 +257,85 @@ class FormattingRotor(FakeUi):
         api.getFocusObject().reportFocus()
         self.description = None
 
-    def filterItems(self, fuzzyString):
-        self.fuzzyItems = (item for item in chain.from_iterable(self.items) if self.buffer in item.name)
-
     def getItem(self):
-        return self.ROTOR_ITEMS[self.categoryIndex][self.item]
+        return self.ROTOR_ITEMS[self.categoryIndex][self.itemindex]
 
     def getCategory(self):
         return self.ROTOR_CATEGORIES[self.categoryIndex]
 
-
     def reportChange(self):
         eventHandler.executeEvent("nameChange", self)
 
+    def searchFromStart(self):
+        state = self.fuzzySearch.searchFirst()
+        if not state:
+            self.reportNoSearchResults()
+            return
+        self.categoryIndex, self.itemIndex = state.categoryindex, state.itemIndex
+        self.lastChanged = LastChangedState.SEARCH
+        self.reportFocus()
+
     @script(gesture="kb:upArrow")
     def script_previousItem(self, gesture):
-        self.item = (self.item - 1 + len(self.ROTOR_ITEMS[self.categoryIndex])
-                     ) % len(self.ROTOR_ITEMS[self.categoryIndex])
+        if self.buffer:
+            state = self.fuzzySearch.searchBackward(
+                WorldState(self.categoryIndex, self.itemIndex))
+            if not state:
+                # There's no search results before this index. Reset to the end, and search from there.
+                state = self.fuzzySearch.searchBackward(
+                    WorldState(len(self.ROTOR_CATEGORIES)-1, len(self.ROTOR_ITEMS[self.categoryIndex])-1))
+                if not state:
+                    # There really are just no search results for this buffer, at all.
+                    self.reportNoSearchResults()
+                    return
+            self.categoryindex, self.itemIndex = state.categoryindex, state.itemIndex
+            self.lastChanged = LastChangedState.SEARCH
+            self.reportFocus()
+            return
+        self.itemIndex = (self.itemIndex - 1 + len(self.ROTOR_ITEMS[self.categoryIndex])
+                          ) % len(self.ROTOR_ITEMS[self.categoryIndex])
         self.lastChanged = LastChangedState.ITEM
         self.reportFocus()
 
     @script(gesture='kb:downArrow')
     def script_nextItem(self, gesture):
-        self.item = (self.item + 1) % len(self.ROTOR_ITEMS[self.categoryIndex])
+        if self.buffer:
+            state = self.fuzzySearch.searchForward(
+                WorldState(self.categoryIndex, self.itemIndex))
+            if not state:
+                # There's no search results after  this index. Reset to the start, and search from there.
+                state = self.fuzzySearch.searchForward(
+                    WorldState(0, 0))
+                if not state:
+                    # There really are just no search results for this buffer, at all.
+                    self.reportNoSearchResults()
+                    return
+            self.categoryindex, self.itemIndex = state.categoryindex, state.itemIndex
+            self.lastChanged = LastChangedState.SEARCH
+            self.reportFocus()
+            return
+        self.itemIndex = (
+            self.itemIndex + 1) % len(self.ROTOR_ITEMS[self.categoryIndex])
         self.lastChanged = LastChangedState.ITEM
         self.reportFocus()
 
     @script(gesture="kb:leftArrow")
     def script_previousCategory(self, gesture):
+        if self.buffer:
+            return
         self.categoryIndex = (
             self.categoryIndex - 1 + len(self.ROTOR_CATEGORIES)) % len(self.ROTOR_CATEGORIES)
-        self.item = 0
+        self.itemIndex = 0
         self.lastChanged = LastChangedState.CATEGORY
         self.reportFocus()
 
     @script(gesture="kb:rightArrow")
     def script_nextCategory(self, gesture):
-        self.categoryIndex = (self.categoryIndex + 1) % len(self.ROTOR_CATEGORIES)
-        self.item = 0
+        if self.buffer:
+            return
+        self.categoryIndex = (self.categoryIndex +
+                              1) % len(self.ROTOR_CATEGORIES)
+        self.itemIndex = 0
         self.lastChanged = LastChangedState.CATEGORY
         self.reportFocus()
 
@@ -320,7 +364,8 @@ class FormattingRotor(FakeUi):
             return
         key = gesture.mainKeyName
         self.buffer += key
-        ui.message(key) # do not submit me
+        self.fuzySearch = FuzzyItemSearch(self.buffer, self.ROTOR_ITEMS)
+        self.searchFromStart()
 
     @script(gesture="kb:enter")
     def script_save(self, other):
@@ -336,3 +381,5 @@ class FormattingRotor(FakeUi):
             return
         ui.message('%s deleted' % self.buffer[-1])
         self.buffer = self.buffer[:-1]
+        self.fuzySearch = FuzzyItemSearch(self.buffer, self.ROTOR_ITEMS)
+        self.searchFromStart()

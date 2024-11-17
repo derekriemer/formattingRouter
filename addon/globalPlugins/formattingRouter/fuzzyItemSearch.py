@@ -56,6 +56,15 @@ class FuzzyItemSearch:
                 return WorldState(categoryIndex, itemIndex)
             itemIndex -= 1
 
+    def searchFirst(self):
+        """ convenience method to search for the first item in the list."""
+        return self.searchFromHere(WorldState(0,0))
+
+    def searchFromHere(self, state):
+        if self.state_matches(state):
+            return state
+        return self.searchForward(state)
+
     def state_matches(self, state: WorldState) -> bool:
         self._validateWorldState(self, state)
         return self.buffer in self.items[state.categoryIndex][state.itemIndex].name
