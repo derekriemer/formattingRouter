@@ -8,7 +8,6 @@ import eventHandler
 import ui
 from mathPres import MathInteractionNVDAObject as FakeUi
 from scriptHandler import script
-from logHandler import log
 
 from . import formattingRotorUtils
 from .types import FormattingItem, WorldState
@@ -306,7 +305,6 @@ class FormattingRotor(FakeUi):
 
     @script(gesture='kb:downArrow')
     def script_nextItem(self, gesture):
-        log.debug(f"Here we go, searching next")
         if self.buffer:
             state = self.fuzzySearch.searchForward(
                 WorldState(self.categoryIndex, self.itemIndex))

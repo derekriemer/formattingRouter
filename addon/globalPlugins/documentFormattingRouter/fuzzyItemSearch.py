@@ -1,5 +1,4 @@
 from typing import Optional,List
-from logHandler import log
 
 from .types import FormattingItem, WorldState
 
@@ -12,7 +11,6 @@ class FuzzyItemSearch:
         self.items = items
 
     def matches(self, itemText: str):
-        log.info(F"{itemText.lower()} contain {self.buffer}")
         return self.buffer in itemText.lower()
 
     def searchForward(self, worldState: WorldState) -> Optional[WorldState]:
@@ -66,11 +64,9 @@ class FuzzyItemSearch:
         return self.searchBackward(state)
 
     def searchFromHere(self, state: WorldState):
-        log.info(f"Starting from here, state, {state}, for buffer {self.buffer} {self.items[0][0]}")
         if self.state_matches(state):
             return state
         return self.searchForward(state)
 
     def state_matches(self, state: WorldState) -> bool:
-        log.info(F"Matching for state: {self.matches(self.items[state.categoryIndex][state.itemIndex].name)}")
         return self.matches(self.items[state.categoryIndex][state.itemIndex].name)
