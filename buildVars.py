@@ -16,14 +16,14 @@ def _(arg):
 # Add-on information variables
 addon_info = {
 	# add-on Name/identifier, internal for NVDA
-	"addon_name": "formattingRotor",
+	"addon_name": "documentFormattingRotor",
 	# Add-on summary, usually the user visible name of the addon.
 	# Translators: Summary for this add-on
 	# to be shown on installation and add-on information found in Add-ons Manager.
-	"addon_summary": _("Formatting Rotor"),
+	"addon_summary": _("Document Formatting Rotor"),
 	# Add-on description
 	# Translators: Long description to be shown for this add-on on add-on information from add-ons manager
-	"addon_description": _("""Provides a simple rotor that can be used to cycle through font attributes.
+	"addon_description": _("""Provides a simple rotor that can be used to cycle through document formatting settings.
 						Press nvda/g to envoke.
 						"""),
 	# version
