@@ -27,13 +27,14 @@ class LastChangedState(Enum):
 class FormattingRotor(FakeUi):
     # We don't want NVDA calling this math, and there's no layered keystrokes AFAIK that we can use without reporting some role. Menuitem just has the nice sideaffect that name changes report and it feels native.
     role = controlTypes.role.Role.MENUITEM
-    description = """
+    # Translators: Help text for the rotor.
+    description = ("""
     Press left/right to cycle through categories, then press
     up/down to select the formatting setting you want. You can also type
     part of the setting,then press up/down to search the settings. Backspace to
     remove typed characters. Press space to cycle through the available
     settings. Press enter to save, or escape to cancel.
-    """
+    """)
 
     def _get_name(self):
         match self.lastChanged:
@@ -74,7 +75,7 @@ class FormattingRotor(FakeUi):
             FormattingItem(
                 # Translators: This is an item in the document formatting rotor.
                 _("Font attributes"),
-                "reportFontAttributes",
+                "fontAttributeReporting",
             ),
             FormattingItem(
                 # Translators: This is an item in the document formatting rotor.
