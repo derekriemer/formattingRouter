@@ -37,14 +37,17 @@ class FormattingRotor(FakeUi):
     """)
 
     def _get_name(self):
+        item = self.getItem()
+        category = self.getCategory()
+        state = formattingRotorUtils.makeHumanReadableConfigValue(item.configKey, self.config[item.configKey])
+        name = []
         match self.lastChanged:
             case LastChangedState.ITEM | LastChangedState.SEARCH:
-                return self.getItem().name
+                return F"{item.name} {state}"
             case LastChangedState.CATEGORY:
-                return self.getCategory()
+                return f"{category}: {item.name} {state}"
             case LastChangedState.SETTING:
-                configKey = self.getItem().configKey
-                return formattingRotorUtils.makeHumanReadableConfigValue(configKey, self.config[configKey])
+                return state
     _cache_name = False
 
     ROTOR_CATEGORIES = [
