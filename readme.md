@@ -21,7 +21,8 @@ To interact with the **Document Formatting Rotor**, use the following commands:
 | **Characters (A-Z)** | Search for a setting by name. See the [next section](#searching) for more information. |
 | **Backspace** | Delete or remove a character from the search. When the last character is removed, navigation by categories is re-enabled. See the [next section](#searching) for more information. |
 
-## Searching
+## Searching <a id="searching">
+
 
 The **Document Formatting Rotor** includes a search feature that allows users to quickly find and adjust specific settings. Here's how searching works:
 
