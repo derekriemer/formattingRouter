@@ -27,7 +27,7 @@ addon_info = {
 						Press nvda/g to envoke.
 						"""),
 	# version
-	"addon_version": "1.0",
+	"addon_version": "1.1",
 	# Author(s)
 	"addon_author": "Derek Riemer <driemer.riemer@gmail.com>",
 	# URL for the add-on documentation support
